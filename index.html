@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Elif Phonics</title>
+  <style>
+    /* ─── Reset & Variables ─────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #FFF9F0;
+      --header-bg:   #FF6B6B;
+      --short-a:     #FFD93D;
+      --short-e:     #6BCB77;
+      --short-i:     #FF9F43;
+      --short-o:     #A29BFE;
+      --short-u:     #FF6B9D;
+      --vowel-color: #FF4500;
+      --btn-blue:    #4D96FF;
+      --btn-blue-dk: #2979FF;
+      --card-bg:     #FFFFFF;
+      --shadow:      0 4px 12px rgba(0,0,0,0.10);
+      --radius:      16px;
+      --font:        'Comic Sans MS', 'Chalkboard SE', 'Marker Felt', cursive;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      min-height: 100vh;
+      color: #333;
+    }
+
+    /* ─── Header ────────────────────────────────────────────────────── */
+    header {
+      background: var(--header-bg);
+      padding: 0.6rem 1.25rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.6rem;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    header h1 {
+      color: #fff;
+      font-size: clamp(1.1rem, 3.5vw, 1.6rem);
+      text-shadow: 2px 2px 0 rgba(0,0,0,0.15);
+      flex-shrink: 0;
+    }
+
+    #star-counter {
+      background: #fff;
+      color: #FF6B6B;
+      font-weight: bold;
+      font-size: 1rem;
+      padding: 0.3rem 0.8rem;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      box-shadow: var(--shadow);
+      flex-shrink: 0;
+    }
+
+    #star-counter .star-icon { font-size: 1.2rem; }
+
+    #filter-tabs {
+      display: flex;
+      gap: 0.35rem;
+      margin-left: auto;
+      flex-wrap: wrap;
+    }
+
+    .tab-btn {
+      background: rgba(255,255,255,0.22);
+      color: #fff;
+      border: 2px solid rgba(255,255,255,0.45);
+      padding: 0.28rem 0.75rem;
+      border-radius: 999px;
+      font-family: var(--font);
+      font-size: 0.85rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+
+    .tab-btn:hover { background: rgba(255,255,255,0.4); transform: scale(1.05); }
+
+    .tab-btn.tab--active {
+      background: #fff;
+      color: var(--header-bg);
+      border-color: #fff;
+    }
+
+    /* per-vowel active colors */
+    .tab-btn[data-filter="short-a"].tab--active { color: #cc9900; }
+    .tab-btn[data-filter="short-e"].tab--active { color: #2e8b57; }
+    .tab-btn[data-filter="short-i"].tab--active { color: #cc5500; }
+    .tab-btn[data-filter="short-o"].tab--active { color: #5c4fcf; }
+    .tab-btn[data-filter="short-u"].tab--active { color: #cc2277; }
+
+    /* ─── Card Grid ─────────────────────────────────────────────────── */
+    #card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 1rem;
+      padding: 1.25rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* ─── Individual Card ───────────────────────────────────────────── */
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 3px solid transparent;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0.6rem 0.6rem 0.8rem;
+      cursor: pointer;
+      transition: transform 0.18s, box-shadow 0.18s, border-color 0.18s;
+      position: relative;
+      overflow: hidden;
+      opacity: 0;
+      animation: cardFadeIn 0.4s ease forwards;
+    }
+
+    @keyframes cardFadeIn {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .card:hover {
+      transform: scale(1.06) translateY(-3px);
+      box-shadow: 0 8px 22px rgba(0,0,0,0.16);
+    }
+
+    .card:focus-visible {
+      outline: 3px solid var(--btn-blue);
+      outline-offset: 2px;
+    }
+
+    /* Group accents — colored left border strip */
+    .card--short-a { border-left: 5px solid var(--short-a); }
+    .card--short-e { border-left: 5px solid var(--short-e); }
+    .card--short-i { border-left: 5px solid var(--short-i); }
+    .card--short-o { border-left: 5px solid var(--short-o); }
+    .card--short-u { border-left: 5px solid var(--short-u); }
+
+    /* Heard star badge */
+    .card--heard::after {
+      content: "★";
+      position: absolute;
+      top: 5px;
+      right: 7px;
+      font-size: 1.1rem;
+      color: var(--short-a);
+      text-shadow: 0 1px 3px rgba(0,0,0,0.2);
+      pointer-events: none;
+    }
+
+    /* Rhyme friend glow — color matches the group */
+    .card--short-a.card--rhyme-friend { border-color: var(--short-a); box-shadow: 0 0 0 3px var(--short-a), var(--shadow); }
+    .card--short-e.card--rhyme-friend { border-color: var(--short-e); box-shadow: 0 0 0 3px var(--short-e), var(--shadow); }
+    .card--short-i.card--rhyme-friend { border-color: var(--short-i); box-shadow: 0 0 0 3px var(--short-i), var(--shadow); }
+    .card--short-o.card--rhyme-friend { border-color: var(--short-o); box-shadow: 0 0 0 3px var(--short-o), var(--shadow); }
+    .card--short-u.card--rhyme-friend { border-color: var(--short-u); box-shadow: 0 0 0 3px var(--short-u), var(--shadow); }
+
+    .card--hidden { display: none; }
+
+    .card__img {
+      width: 100%;
+      aspect-ratio: 1;
+      object-fit: cover;
+      border-radius: 10px;
+      display: block;
+      background: #f5f0e8;
+    }
+
+    /* placeholder while image loads */
+    .card__img[src=""] { opacity: 0; }
+
+    .card__label {
+      margin-top: 0.55rem;
+      font-size: 1.15rem;
+      font-weight: bold;
+      letter-spacing: 0.02em;
+      text-align: center;
+    }
+
+    .card__badge {
+      margin-top: 0.25rem;
+      font-size: 0.7rem;
+      font-weight: bold;
+      letter-spacing: 0.05em;
+      padding: 0.1rem 0.5rem;
+      border-radius: 999px;
+      color: #555;
+      background: #f0ece3;
+    }
+
+    /* ─── Spotlight Overlay ─────────────────────────────────────────── */
+    #spotlight {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 1rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+
+    #spotlight.spotlight--active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    #spot-panel {
+      background: #fff;
+      border-radius: 24px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.30);
+      padding: 1.5rem 1.75rem 1.75rem;
+      max-width: 420px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.75rem;
+      transform: scale(0.88) translateY(20px);
+      transition: transform 0.28s cubic-bezier(0.34,1.56,0.64,1);
+      position: relative;
+    }
+
+    #spotlight.spotlight--active #spot-panel {
+      transform: scale(1) translateY(0);
+    }
+
+    /* top accent bar color changes per active vowel group */
+    #spot-panel::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 6px;
+      border-radius: 24px 24px 0 0;
+      background: var(--spot-accent, var(--btn-blue));
+      transition: background 0.3s;
+    }
+
+    #spot-close {
+      position: absolute;
+      top: 0.75rem;
+      right: 0.9rem;
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #aaa;
+      line-height: 1;
+      padding: 0.2rem 0.4rem;
+      border-radius: 6px;
+      transition: color 0.15s, background 0.15s;
+    }
+    #spot-close:hover { color: #FF6B6B; background: #fff0f0; }
+
+    #spot-img {
+      width: 100%;
+      max-height: 220px;
+      object-fit: contain;
+      border-radius: 14px;
+      background: var(--bg);
+      padding: 0.5rem;
+    }
+
+    #spot-rime-split {
+      font-size: clamp(1.4rem, 5vw, 2.2rem);
+      font-weight: bold;
+      letter-spacing: 0.04em;
+      text-align: center;
+      color: #444;
+    }
+
+    #spot-rime-split .onset {
+      color: #bbb;
+      font-weight: 600;
+    }
+
+    #spot-rime-split .rime {
+      color: var(--vowel-color);
+      font-weight: 900;
+    }
+
+    #spot-word {
+      font-size: clamp(2rem, 8vw, 3.5rem);
+      font-weight: 900;
+      letter-spacing: 0.06em;
+      text-align: center;
+      color: #222;
+      line-height: 1.1;
+    }
+
+    .vowel {
+      color: var(--vowel-color);
+      font-weight: 900;
+    }
+
+    #spot-family {
+      font-size: 0.95rem;
+      font-weight: bold;
+      color: #777;
+      background: #f5f0e8;
+      padding: 0.25rem 0.9rem;
+      border-radius: 999px;
+    }
+
+    #spot-rhyme-friends {
+      font-size: 0.85rem;
+      color: #888;
+      text-align: center;
+    }
+
+    #spot-rhyme-friends strong { color: #555; }
+
+    #spot-replay {
+      background: var(--btn-blue);
+      color: #fff;
+      border: none;
+      border-radius: 999px;
+      padding: 0.6rem 1.6rem;
+      font-family: var(--font);
+      font-size: 1.05rem;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      box-shadow: 0 4px 12px rgba(77,150,255,0.35);
+      transition: background 0.15s, transform 0.1s;
+      margin-top: 0.25rem;
+    }
+    #spot-replay:hover { background: var(--btn-blue-dk); transform: scale(1.05); }
+    #spot-replay:active { transform: scale(0.97); }
+
+    /* ─── Responsive tweaks ──────────────────────────────────────────── */
+    @media (max-width: 600px) {
+      #card-grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 0.7rem; padding: 0.75rem; }
+      #filter-tabs { margin-left: 0; width: 100%; justify-content: flex-start; }
+      .tab-btn { font-size: 0.78rem; padding: 0.22rem 0.6rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ─── Header ─────────────────────────────────────────────────────── -->
+  <header>
+    <h1>🔤 Elif Phonics</h1>
+
+    <div id="star-counter" aria-live="polite" aria-label="Words heard">
+      <span class="star-icon">★</span>
+      <span id="star-count">0</span>
+      <span id="star-total">/ 48</span>
+    </div>
+
+    <nav id="filter-tabs" role="tablist" aria-label="Filter by vowel sound">
+      <button class="tab-btn tab--active" data-filter="all"     role="tab" aria-pressed="true"  aria-label="Show all words">All</button>
+      <button class="tab-btn"             data-filter="short-a" role="tab" aria-pressed="false" aria-label="Show short-A words">Short-A</button>
+      <button class="tab-btn"             data-filter="short-e" role="tab" aria-pressed="false" aria-label="Show short-E words">Short-E</button>
+      <button class="tab-btn"             data-filter="short-i" role="tab" aria-pressed="false" aria-label="Show short-I words">Short-I</button>
+      <button class="tab-btn"             data-filter="short-o" role="tab" aria-pressed="false" aria-label="Show short-O words">Short-O</button>
+      <button class="tab-btn"             data-filter="short-u" role="tab" aria-pressed="false" aria-label="Show short-U words">Short-U</button>
+    </nav>
+  </header>
+
+  <!-- ─── Card Grid ──────────────────────────────────────────────────── -->
+  <main>
+    <div id="card-grid" role="list" aria-label="Phonics word cards"></div>
+  </main>
+
+  <!-- ─── Spotlight Overlay ─────────────────────────────────────────── -->
+  <div id="spotlight" role="dialog" aria-modal="true" aria-labelledby="spot-word">
+    <div id="spot-panel">
+      <button id="spot-close" aria-label="Close">✕</button>
+      <img id="spot-img" src="" alt="" />
+      <div id="spot-rime-split" aria-hidden="true"></div>
+      <div id="spot-word" aria-live="assertive"></div>
+      <div id="spot-family"></div>
+      <div id="spot-rhyme-friends"></div>
+      <button id="spot-replay" aria-label="Replay the word">
+        <span aria-hidden="true">🔊</span> Hear it again!
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // ═══════════════════════════════════════════════════════════════════
+    // DATA
+    // ═══════════════════════════════════════════════════════════════════
+    const WORDS = [
+      // ── Short-A (9 words) ───────────────────────────────────────────
+      { word: "cat",   img: "cat.jpg",   audio: "cat.mp3",   group: "short-a", family: "-at",  onset: "c",  rime: "at"  },
+      { word: "mat",   img: "mat.webp",  audio: "mat.mp3",   group: "short-a", family: "-at",  onset: "m",  rime: "at"  },
+      { word: "can",   img: "can.png",   audio: "can.mp3",   group: "short-a", family: "-an",  onset: "c",  rime: "an"  },
+      { word: "fan",   img: "fan.jpg",   audio: "fan.mp3",   group: "short-a", family: "-an",  onset: "f",  rime: "an"  },
+      { word: "cap",   img: "cap.jpg",   audio: "cap.mp3",   group: "short-a", family: "-ap",  onset: "c",  rime: "ap"  },
+      { word: "map",   img: "map.jpg",   audio: "map.mp3",   group: "short-a", family: "-ap",  onset: "m",  rime: "ap"  },
+      { word: "flap",  img: "flap.jpg",  audio: "flap.mp3",  group: "short-a", family: "-ap",  onset: "fl", rime: "ap"  },
+      { word: "jam",   img: "jam.jpg",   audio: "jam.mp3",   group: "short-a", family: "-am",  onset: "j",  rime: "am"  },
+      { word: "sack",  img: "sack.jpg",  audio: "sack.mp3",  group: "short-a", family: "-ack", onset: "s",  rime: "ack" },
+      // ── Short-E (9 words) ───────────────────────────────────────────
+      { word: "bed",   img: "bed.jpg",   audio: "bed.mp3",   group: "short-e", family: "-ed",  onset: "b",  rime: "ed"  },
+      { word: "sled",  img: "sled.jpg",  audio: "sled.mp3",  group: "short-e", family: "-ed",  onset: "sl", rime: "ed"  },
+      { word: "leg",   img: "leg.png",   audio: "leg.mp3",   group: "short-e", family: "-eg",  onset: "l",  rime: "eg"  },
+      { word: "peg",   img: "peg.jpg",   audio: "peg.mp3",   group: "short-e", family: "-eg",  onset: "p",  rime: "eg"  },
+      { word: "pet",   img: "pet.png",   audio: "pet.mp3",   group: "short-e", family: "-et",  onset: "p",  rime: "et"  },
+      { word: "pen",   img: "pen.jpg",   audio: "pen.mp3",   group: "short-e", family: "-en",  onset: "p",  rime: "en"  },
+      { word: "nest",  img: "nest.jpg",  audio: "nest.mp3",  group: "short-e", family: "-est", onset: "n",  rime: "est" },
+      { word: "egg",   img: "egg.png",   audio: "egg.mp3",   group: "short-e", family: "-egg", onset: "",   rime: "egg" },
+      { word: "bell",  img: "bell.jpg",  audio: "bell.mp3",  group: "short-e", family: "-ell", onset: "b",  rime: "ell" },
+      // ── Short-I (10 words) ──────────────────────────────────────────
+      { word: "fig",   img: "fig.jpg",   audio: "fig.mp3",   group: "short-i", family: "-ig",  onset: "f",  rime: "ig"  },
+      { word: "pig",   img: "pig.jpg",   audio: "pig.mp3",   group: "short-i", family: "-ig",  onset: "p",  rime: "ig"  },
+      { word: "twig",  img: "twig.jpg",  audio: "twig.mp3",  group: "short-i", family: "-ig",  onset: "tw", rime: "ig"  },
+      { word: "wig",   img: "wig.jpg",   audio: "wig.mp3",   group: "short-i", family: "-ig",  onset: "w",  rime: "ig"  },
+      { word: "mix",   img: "mix.png",   audio: "mix.mp3",   group: "short-i", family: "-ix",  onset: "m",  rime: "ix"  },
+      { word: "kid",   img: "kid.png",   audio: "kid.mp3",   group: "short-i", family: "-id",  onset: "k",  rime: "id"  },
+      { word: "slim",  img: "slim.png",  audio: "slim.mp3",  group: "short-i", family: "-im",  onset: "sl", rime: "im"  },
+      { word: "fin",   img: "fin.jpg",   audio: "fin.mp3",   group: "short-i", family: "-in",  onset: "f",  rime: "in"  },
+      { word: "pin",   img: "pin.jpg",   audio: "pin.mp3",   group: "short-i", family: "-in",  onset: "p",  rime: "in"  },
+      { word: "ship",  img: "ship.png",  audio: "ship.mp3",  group: "short-i", family: "-ip",  onset: "sh", rime: "ip"  },
+      // ── Short-O (10 words) ──────────────────────────────────────────
+      { word: "box",   img: "box.jpg",   audio: "box.mp3",   group: "short-o", family: "-ox",  onset: "b",  rime: "ox"  },
+      { word: "fox",   img: "fox.jpg",   audio: "fox.mp3",   group: "short-o", family: "-ox",  onset: "f",  rime: "ox"  },
+      { word: "dog",   img: "dog.jpg",   audio: "dog.mp3",   group: "short-o", family: "-og",  onset: "d",  rime: "og"  },
+      { word: "frog",  img: "frog.jpg",  audio: "frog.mp3",  group: "short-o", family: "-og",  onset: "fr", rime: "og"  },
+      { word: "log",   img: "log.jpg",   audio: "log.mp3",   group: "short-o", family: "-og",  onset: "l",  rime: "og"  },
+      { word: "dot",   img: "dot.jpg",   audio: "dot.mp3",   group: "short-o", family: "-ot",  onset: "d",  rime: "ot"  },
+      { word: "pot",   img: "pot.jpg",   audio: "pot.mp3",   group: "short-o", family: "-ot",  onset: "p",  rime: "ot"  },
+      { word: "hop",   img: "hop.jpg",   audio: "hop.mp3",   group: "short-o", family: "-op",  onset: "h",  rime: "op"  },
+      { word: "mop",   img: "mop.jpg",   audio: "mop.mp3",   group: "short-o", family: "-op",  onset: "m",  rime: "op"  },
+      { word: "top",   img: "top.jpg",   audio: "top.mp3",   group: "short-o", family: "-op",  onset: "t",  rime: "op"  },
+      // ── Short-U (10 words) ──────────────────────────────────────────
+      { word: "bug",   img: "bug.jpg",   audio: "bug.mp3",   group: "short-u", family: "-ug",  onset: "b",  rime: "ug"  },
+      { word: "hug",   img: "hug.jpg",   audio: "hug.mp3",   group: "short-u", family: "-ug",  onset: "h",  rime: "ug"  },
+      { word: "jug",   img: "jug.jpg",   audio: "jug.mp3",   group: "short-u", family: "-ug",  onset: "j",  rime: "ug"  },
+      { word: "bus",   img: "bus.jpg",   audio: "bus.mp3",   group: "short-u", family: "-us",  onset: "b",  rime: "us"  },
+      { word: "cup",   img: "cup.jpg",   audio: "cup.mp3",   group: "short-u", family: "-up",  onset: "c",  rime: "up"  },
+      { word: "gum",   img: "gum.jpg",   audio: "gum.mp3",   group: "short-u", family: "-um",  onset: "g",  rime: "um"  },
+      { word: "mud",   img: "mud.jpg",   audio: "mud.mp3",   group: "short-u", family: "-ud",  onset: "m",  rime: "ud"  },
+      { word: "nut",   img: "nut.jpg",   audio: "nut.mp3",   group: "short-u", family: "-ut",  onset: "n",  rime: "ut"  },
+      { word: "sun",   img: "sun.png",   audio: "sun.mp3",   group: "short-u", family: "-un",  onset: "s",  rime: "un"  },
+      { word: "tub",   img: "tub.jpg",   audio: "tub.mp3",   group: "short-u", family: "-ub",  onset: "t",  rime: "ub"  },
+    ];
+
+    // ═══════════════════════════════════════════════════════════════════
+    // STATE
+    // ═══════════════════════════════════════════════════════════════════
+    const state = {
+      activeFilter: "all",
+      spotlightWord: null,
+      heardWords: new Set(),
+      currentAudio: null,
+    };
+
+    // Accent color per group for spotlight panel top bar
+    const GROUP_COLOR = {
+      "short-a": "#FFD93D",
+      "short-e": "#6BCB77",
+      "short-i": "#FF9F43",
+      "short-o": "#A29BFE",
+      "short-u": "#FF6B9D",
+    };
+
+    // ═══════════════════════════════════════════════════════════════════
+    // HELPERS
+    // ═══════════════════════════════════════════════════════════════════
+    const VOWELS = new Set(['a','e','i','o','u']);
+
+    function highlightVowels(word) {
+      return [...word].map(ch =>
+        VOWELS.has(ch.toLowerCase())
+          ? `<span class="vowel">${ch}</span>`
+          : ch
+      ).join('');
+    }
+
+    function renderOnsetRime(onset, rime) {
+      const rimeHL = highlightVowels(rime).replace(
+        /<span class="vowel">([^<]+)<\/span>/g,
+        '<span class="vowel">$1</span>'
+      );
+      if (!onset) {
+        return `<span class="rime">${rimeHL.toUpperCase()}</span>`;
+      }
+      return `<span class="onset">${onset.toUpperCase()}</span> · <span class="rime">${rimeHL.toUpperCase()}</span>`;
+    }
+
+    function getWordData(word) {
+      return WORDS.find(w => w.word === word);
+    }
+
+    function getFamilyMembers(family) {
+      return WORDS.filter(w => w.family === family).map(w => w.word);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // AUDIO
+    // ═══════════════════════════════════════════════════════════════════
+    function playAudio(src) {
+      if (state.currentAudio) {
+        state.currentAudio.pause();
+        state.currentAudio.currentTime = 0;
+      }
+      const audio = new Audio(src);
+      state.currentAudio = audio;
+      audio.play().catch(() => {});
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // RENDER
+    // ═══════════════════════════════════════════════════════════════════
+    function renderCards() {
+      const grid = document.getElementById('card-grid');
+      // Update total count dynamically
+      document.getElementById('star-total').textContent = `/ ${WORDS.length}`;
+
+      WORDS.forEach((w, i) => {
+        const btn = document.createElement('button');
+        btn.className = `card card--${w.group}`;
+        btn.dataset.word = w.word;
+        btn.dataset.group = w.group;
+        btn.dataset.family = w.family;
+        btn.style.animationDelay = `${i * 40}ms`;
+        btn.setAttribute('role', 'listitem');
+        btn.setAttribute('aria-label', `Hear the word: ${w.word}`);
+        btn.innerHTML = `
+          <img class="card__img" src="${w.img}" alt="${w.word}" loading="lazy">
+          <span class="card__label">${w.word}</span>
+          <span class="card__badge">${w.family}</span>
+        `;
+        grid.appendChild(btn);
+      });
+    }
+
+    function applyFilter(filter) {
+      document.querySelectorAll('.card').forEach(card => {
+        const show = filter === 'all' || card.dataset.group === filter;
+        card.classList.toggle('card--hidden', !show);
+      });
+    }
+
+    function updateSpotlight(wordData) {
+      document.getElementById('spot-img').src = wordData.img;
+      document.getElementById('spot-img').alt = wordData.word;
+      document.getElementById('spot-word').innerHTML = highlightVowels(wordData.word);
+      document.getElementById('spot-rime-split').innerHTML = renderOnsetRime(wordData.onset, wordData.rime);
+      document.getElementById('spot-family').textContent = wordData.family + ' family';
+
+      // Set top accent bar color
+      document.getElementById('spot-panel').style.setProperty(
+        '--spot-accent', GROUP_COLOR[wordData.group] || '#4D96FF'
+      );
+
+      const members = getFamilyMembers(wordData.family).filter(w => w !== wordData.word);
+      const friendsEl = document.getElementById('spot-rhyme-friends');
+      if (members.length > 0) {
+        friendsEl.innerHTML = `<strong>Rhyme friends:</strong> ${members.join(', ')}`;
+      } else {
+        friendsEl.textContent = '';
+      }
+
+      state.spotlightWord = wordData.word;
+      document.getElementById('spotlight').classList.add('spotlight--active');
+    }
+
+    function closeSpotlight() {
+      document.getElementById('spotlight').classList.remove('spotlight--active');
+      state.spotlightWord = null;
+      document.querySelectorAll('.card--rhyme-friend').forEach(c =>
+        c.classList.remove('card--rhyme-friend')
+      );
+    }
+
+    function updateRhymeFriends(family) {
+      document.querySelectorAll('.card').forEach(card => {
+        card.classList.toggle('card--rhyme-friend', card.dataset.family === family);
+      });
+    }
+
+    function markCardHeard(word) {
+      if (state.heardWords.has(word)) return;
+      state.heardWords.add(word);
+      const card = document.querySelector(`.card[data-word="${word}"]`);
+      if (card) card.classList.add('card--heard');
+      saveHeardWords();
+    }
+
+    function updateStarCounter() {
+      document.getElementById('star-count').textContent = state.heardWords.size;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // PERSISTENCE
+    // ═══════════════════════════════════════════════════════════════════
+    function saveHeardWords() {
+      try {
+        localStorage.setItem('elif_heard', JSON.stringify([...state.heardWords]));
+      } catch (_) {}
+    }
+
+    function loadHeardWords() {
+      try {
+        const saved = localStorage.getItem('elif_heard');
+        if (saved) {
+          JSON.parse(saved).forEach(w => state.heardWords.add(w));
+        }
+      } catch (_) {}
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // EVENT HANDLERS
+    // ═══════════════════════════════════════════════════════════════════
+    function onCardClick(wordData) {
+      playAudio(wordData.audio);
+      markCardHeard(wordData.word);
+      updateStarCounter();
+      updateSpotlight(wordData);
+      updateRhymeFriends(wordData.family);
+    }
+
+    function onFilterClick(filter) {
+      state.activeFilter = filter;
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        const active = btn.dataset.filter === filter;
+        btn.classList.toggle('tab--active', active);
+        btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+      });
+      applyFilter(filter);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // INIT
+    // ═══════════════════════════════════════════════════════════════════
+    function init() {
+      renderCards();
+
+      // Restore heard words from localStorage
+      loadHeardWords();
+      state.heardWords.forEach(word => {
+        const card = document.querySelector(`.card[data-word="${word}"]`);
+        if (card) card.classList.add('card--heard');
+      });
+      updateStarCounter();
+
+      // Apply default filter
+      applyFilter('all');
+
+      // Card grid — single delegated click listener
+      document.getElementById('card-grid').addEventListener('click', e => {
+        const card = e.target.closest('[data-word]');
+        if (!card) return;
+        const wordData = getWordData(card.dataset.word);
+        if (wordData) onCardClick(wordData);
+      });
+
+      // Filter tabs
+      document.getElementById('filter-tabs').addEventListener('click', e => {
+        const btn = e.target.closest('.tab-btn');
+        if (!btn) return;
+        onFilterClick(btn.dataset.filter);
+      });
+
+      // Spotlight replay
+      document.getElementById('spot-replay').addEventListener('click', () => {
+        if (state.spotlightWord) {
+          const wordData = getWordData(state.spotlightWord);
+          if (wordData) playAudio(wordData.audio);
+        }
+      });
+
+      // Spotlight close
+      document.getElementById('spot-close').addEventListener('click', closeSpotlight);
+
+      // Click dim overlay to close
+      document.getElementById('spotlight').addEventListener('click', e => {
+        if (e.target === document.getElementById('spotlight')) closeSpotlight();
+      });
+
+      // Escape key closes spotlight
+      document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') closeSpotlight();
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
